@@ -39,19 +39,19 @@ The core novelty of this architecture lies in taking theoretical OS concepts and
 
 ### Challenge 1: Severe Memory Bloat & Inefficient Buffer Allocation
 * **Situation:** When compressing files, the original approach caused severe memory bloat and system stalling, often leading to Out-Of-Memory (OOM) errors on large workloads.
-* **Task (What I was doing previously):** Previously, the daemon forcefully allocated a massive 50MB fixed RAM buffer in a single block for every single file regardless of its actual size, which wasted huge amounts of virtual memory and scaled incredibly poorly.
+* **Task:** Previously, the daemon forcefully allocated a massive 50MB fixed RAM buffer in a single block for every single file regardless of its actual size, which wasted huge amounts of virtual memory and scaled incredibly poorly.
 * **Action:** I engineered a "Hybrid Virtual Memory" strategy. For large files, I replaced the fixed buffer with a dynamic chunking system that streams 2MB buffers (the sweet spot for CPU L3 cache utilization). For smaller files (under 4MB), I utilized the `mmap()` system call to map the file directly into virtual memory (zero-copy), bypassing standard heap buffers entirely.
 * **Result:** Peak memory consumption was slashed by approximately 90%. The daemon can now handle gigabytes of data concurrently while maintaining a footprint of just a few megabytes, proving a massive optimization in RAM utilization.
 
 ### Challenge 2: Head-of-Line Blocking & Thread Starvation
 * **Situation:** Large files arriving in the system were causing major OS scheduling issues. They would occupy the worker threads for extended periods, completely blocking smaller files that arrived later and ruining the system's average turnaround time.
-* **Task (What I was doing previously):** Previously, the system used a naive First-In-First-Out (FIFO) queue and was entirely single-threaded, getting stuck behind massive files. Furthermore, it forced Zlib to use Level 9 (Maximum Compression), burning massive amounts of OS CPU time for practically zero gain.
+* **Task:** Previously, the system used a naive First-In-First-Out (FIFO) queue and was entirely single-threaded, getting stuck behind massive files. Furthermore, it forced Zlib to use Level 9 (Maximum Compression), burning massive amounts of OS CPU time for practically zero gain.
 * **Action:** I replaced the FIFO queue with a Min-Heap priority queue based on the **Shortest Remaining Processing Time (SRPT)** algorithm, dynamically calculating priority based on the remaining uncompressed chunk size. I also dropped the Zlib level to `Z_BEST_SPEED` to reduce overhead.
 * **Result:** The SRPT scheduler, combined with 12 hardware-pinned threads and optimized compression levels, resulted in an undeniable ~2x wall-clock speedup. CPU processing time was vastly reduced, and small files are now processed almost instantly.
 
 ### Challenge 3: Race Conditions Across 12 Concurrent Threads
 * **Situation:** Having 12 hardware threads continuously reading from the dispatcher and writing chunks simultaneously resulted in highly dangerous race conditions and data corruption.
-* **Task (What I was doing previously):** Previously, thread communication was handled with standard, basic locks which constantly caused deadlocks or massive performance bottlenecks due to severe thread contention when attempting to push/pop data concurrently.
+* **Task:** Previously, thread communication was handled with standard, basic locks which constantly caused deadlocks or massive performance bottlenecks due to severe thread contention when attempting to push/pop data concurrently.
 * **Action:** I implemented a textbook **Monitor** class from scratch (`Monitor.h`). I encapsulated all shared state, utilizing a strict `std::mutex` paired with a `std::condition_variable`. I ensured threads were properly put to sleep when idle and awakened dynamically only when new data was actively pushed.
 * **Result:** The application now runs flawlessly across 12 threads with zero data races, data corruption, or deadlocks. CPU utilization sits perfectly at 0% when idle, proving the efficiency of the Monitor synchronization pattern in real-world systems programming.
 
