@@ -1,4 +1,6 @@
 # Project Report: Priority-Scheduled File Compression Daemon
+
+# Video Demo Link: [![Watch the video](https://youtube.com)](https://www.youtube.com/watch?v=E5eqq-vW-Gs)
  
 ## 1. Introduction of the Project
 The **Compression Daemon** is a high-performance, background service designed to automatically monitor a specified directory and compress newly added files in real-time. Built in modern C++17, the project demonstrates a clear evolution from a naive, single-threaded baseline (using a FIFO queue) to an optimized, multi-threaded architecture (utilizing a 12-core thread pool with an SRPT - Shortest Remaining Processing Time priority queue). The daemon leverages a hybrid virtual memory strategy and real Zlib algorithms to physically compress bytes on the hard drive, explicitly optimizing both execution time and memory footprint simultaneously.
