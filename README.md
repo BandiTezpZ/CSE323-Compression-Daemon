@@ -1,10 +1,7 @@
 # Priority-Scheduled File Compression Daemon
 
 ## Video Demo
-<a href="https://www.youtube.com/watch?v=E5eqq-vW-Gs" target="_blank">
-  <img src="https://youtube.com" width="500" alt="Watch the video" />
-</a>
-
+[![CLick to watch the video](https://youtube.com)](https://www.youtube.com/watch?v=E5eqq-vW-Gs)
 
 ## Short Introduction
 Welcome to the **Compression Daemon**! This project is a robust, high-performance background service that hooks into OS-level interrupts to automatically monitor directories and compress files on the fly. By transitioning from a naive FIFO queue to a 12-core thread pool powered by an **SRPT (Shortest Remaining Processing Time)** scheduler, it effectively solves real-world challenges like Head-of-Line blocking and memory bloat.
